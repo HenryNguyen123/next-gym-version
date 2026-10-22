@@ -6,7 +6,8 @@ import { useState } from "react";
 import type { FormEvent } from "react";
 import { z } from "zod";
 import { ArrowLeft, ArrowRight, CheckCircle2, Eye, EyeOff, Fingerprint, HeartHandshake, LockKeyhole, Mail, ShieldCheck, Sparkles } from "lucide-react";
-import { FaFacebook, FaGoogle, FaGithub } from "react-icons/fa";
+import { FaFacebook, FaGithub } from "react-icons/fa";
+import { FcGoogle } from "react-icons/fc";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/providers/toast-provider";
 import { login, register, requestPasswordReset, resetPassword } from "@/lib/services/auth.service";
@@ -125,7 +126,7 @@ export function AuthPage({ mode, admin = false }: Props) {
           <Button type="submit" size="lg" disabled={loading}>{loading ? <span className="button-spinner" /> : null}{loading ? "Please wait…" : content.button}<ArrowRight size={15} /></Button>
           <div className="">
             <FaFacebook size={20} />
-            <FaGoogle size={20} />
+            <FcGoogle size={20} className=""/>
             <FaGithub size={20} />
           </div>
           {mode === "login" && !admin && <div className="auth-note"><Fingerprint size={17} /><span><strong>Local preview mode</strong><br />Any non-empty password is accepted here. This is only a UI prototype, not real authentication.</span></div>}

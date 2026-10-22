@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { ToastProvider } from "@/components/providers/toast-provider";
 import "./globals.css";
+import ReduxProvider from "@/components/providers/redux-provider";
 
 export const metadata: Metadata = {
   title: { default: "Pulse — Find your people", template: "%s · Pulse" },
@@ -21,7 +22,9 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
     <html lang="en" suppressHydrationWarning>
       <body>
         <ThemeProvider>
-          <ToastProvider>{children}</ToastProvider>
+          <ReduxProvider>
+            <ToastProvider>{children}</ToastProvider>
+          </ReduxProvider>
         </ThemeProvider>
       </body>
     </html>
