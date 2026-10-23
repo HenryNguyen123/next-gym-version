@@ -7,7 +7,7 @@ import {
   decrement,
   incrementByAmount,
   reset,
-} from "@/lib/redux/features/counter/counterSlice";
+} from "@/lib/redux/features/slices/counter/counter.slice";
 
 export default function CounterExample() {
   const count = useAppSelector((state) => state.counter.value);

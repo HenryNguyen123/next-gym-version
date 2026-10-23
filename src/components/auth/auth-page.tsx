@@ -11,6 +11,8 @@ import { FcGoogle } from "react-icons/fc";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/providers/toast-provider";
 import { login, register, requestPasswordReset, resetPassword } from "@/lib/services/auth.service";
+import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
+import { loginAuthentication } from '@/lib/redux/features/slices/auth/login.slice'
 
 type AuthMode = "login" | "register" | "forgot" | "reset" | "verify";
 type Props = { mode: AuthMode; admin?: boolean };
@@ -28,6 +30,7 @@ const titles: Record<AuthMode, { heading: string; intro: string; button: string 
 };
 
 export function AuthPage({ mode, admin = false }: Props) {
+  const dispatch = useAppDispatch();
   const router = useRouter();
   const { toast } = useToast();
   const [displayName, setDisplayName] = useState("");
@@ -51,8 +54,10 @@ export function AuthPage({ mode, admin = false }: Props) {
     event.preventDefault();
     const nextErrors: Record<string, string> = {};
     if (mode === "login") {
-      const result = loginSchema.safeParse({ email, password });
-      if (!result.success) for (const issue of result.error.issues) nextErrors[String(issue.path[0])] = issue.message;
+      const data = await dispatch(loginAuthentication({email, password})).unwrap();
+      console.log('data:', data);
+      // const result = loginSchema.safeParse({ email, password });
+      // if (!result.success) for (const issue of result.error.issues) nextErrors[String(issue.path[0])] = issue.message;
     }
     if (mode === "register") {
       const result = registerSchema.safeParse({ displayName, email, password });
@@ -72,7 +77,9 @@ export function AuthPage({ mode, admin = false }: Props) {
     try {
       setLoading(true);
       if (mode === "login") {
-        await login({ email, password, role: admin ? "admin" : "user" });
+        const data = await dispatch(loginAuthentication({email, password})).unwrap();
+        console.log('data:', data);
+        // await login({ email, password, role: admin ? "admin" : "user" });
         toast(admin ? "Demo admin session started. Not a production sign-in." : "Welcome back. You’re signed in to the local preview.");
         const requested = new URLSearchParams(window.location.search).get("next");
         const safeNext = requested?.startsWith("/") && !requested.startsWith("//") && (admin ? requested.startsWith("/admin") : !requested.startsWith("/admin")) ? requested : admin ? "/admin" : "/";
@@ -99,6 +106,17 @@ export function AuthPage({ mode, admin = false }: Props) {
     }
   }
 
+  //login handle
+  const handleOnclickLogin = async () => {
+    console.log('check input: ', email, password)
+    try {
+      const data = await dispatch(loginAuthentication({email, password})).unwrap();
+      console.log('data:', data);
+    } catch (error) {
+      console.error("Unexpected error:", error);
+
+    }
+  }
   const isSuccess = done && (mode === "forgot" || mode === "reset" || mode === "register" || mode === "verify");
   return <main className={`auth-page ${admin ? "auth-admin-page" : ""}`}>
     <section className={`auth-showcase ${admin ? "auth-admin-showcase" : ""}`}>
@@ -115,7 +133,9 @@ export function AuthPage({ mode, admin = false }: Props) {
       <Link className="brand-lockup auth-mobile-brand" href={admin ? "/admin/login" : "/"}><span className="brand-symbol"><Sparkles size={18} /></span><span className="brand-word">pulse</span></Link>
       {isSuccess ? <div className="auth-success-state"><div className="auth-success-icon"><CheckCircle2 size={29} /></div><h2>{mode === "forgot" ? "Check your inbox" : mode === "reset" ? "Password updated" : mode === "register" ? "You’re on your way" : "You’re all set"}</h2><p>{mode === "forgot" ? "If an account matches that email, reset instructions are on their way. This message doesn’t reveal whether an account exists." : mode === "reset" ? "Your password reset flow completed in this preview. Use your new password when you sign in." : mode === "register" ? "Your registration request was handled in demo mode. Connect the real registration endpoint and email verification service to complete the account flow." : "Email verification is simulated here. Connect the verification endpoint to check the real token."}</p><Button onClick={() => router.push(mode === "register" || mode === "reset" ? "/login" : admin ? "/admin/login" : "/login")}>{mode === "register" || mode === "reset" ? "Back to sign in" : "Return to sign in"}<ArrowRight size={15} /></Button></div> : <>
         <div className="auth-form-heading"><div className="eyebrow">{admin ? "Admin workspace" : "Welcome to Pulse"}</div><h2>{admin && mode === "login" ? "Welcome back, admin" : content.heading}</h2><p className="auth-form-intro">{admin && mode === "login" ? "Sign in with your organization’s administrator account." : content.intro}</p></div>
-        {mode === "verify" ? <div className="verify-email-card"><div className="verify-icon"><Mail size={25} /></div><strong>One small step left</strong><p>We’ve sent a verification link to <b>{email || "your email address"}</b>. Open that message, follow the link, and come back here.</p><div className="field" style={{ marginTop: 17 }}><label htmlFor="verify-email">Email address</label><input id="verify-email" className="input" type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="you@example.com" /></div><Button className="verify-main-action" onClick={() => setDone(true)}>{content.button}<CheckCircle2 size={15} /></Button><button className="verify-resend" onClick={() => toast("Verification resend needs a connected email service.", "info")}>Resend verification email</button></div> : <form className="auth-form" onSubmit={onSubmit} noValidate>
+        {mode === "verify" ? <div className="verify-email-card"><div className="verify-icon"><Mail size={25} /></div><strong>One small step left</strong><p>We’ve sent a verification link to <b>{email || "your email address"}</b>. Open that message, follow the link, and come back here.</p><div className="field" style={{ marginTop: 17 }}><label htmlFor="verify-email">Email address</label><input id="verify-email" className="input" type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="you@example.com" /></div><Button className="verify-main-action" onClick={() => setDone(true)}>{content.button}<CheckCircle2 size={15} /></Button><button className="verify-resend" onClick={() => toast("Verification resend needs a connected email service.", "info")}>Resend verification email</button></div> : <form className="auth-form"
+         onSubmit={onSubmit} 
+        noValidate>
           {mode === "register" && <div className="field"><label htmlFor="displayName">Display name</label><input id="displayName" className="input" value={displayName} onChange={(event) => { setDisplayName(event.target.value); clearError("displayName"); }} placeholder="How people will know you" autoComplete="name" required />{fieldError("displayName")}</div>}
           {(mode === "login" || mode === "register" || mode === "forgot") && <div className="field"><label htmlFor="email">Email address</label><input id="email" className="input" type="email" value={email} onChange={(event) => { setEmail(event.target.value); clearError("email"); }} placeholder="you@example.com" autoComplete="email" required />{fieldError("email")}</div>}
           {(mode === "login" || mode === "register" || mode === "reset") && <div className="field"><label htmlFor="password">{mode === "reset" ? "New password" : "Password"}</label><div className="password-field"><input id="password" className="input" type={showPassword ? "text" : "password"} value={password} onChange={(event) => { setPassword(event.target.value); clearError("password"); }} autoComplete={mode === "login" ? "current-password" : "new-password"} placeholder={mode === "login" ? "Enter your password" : "At least 8 characters"} required /><button className="password-reveal" type="button" aria-label={showPassword ? "Hide password" : "Show password"} onClick={() => setShowPassword((value) => !value)}>{showPassword ? <EyeOff size={16} /> : <Eye size={16} />}</button></div>{fieldError("password")}{(mode === "register" || mode === "reset") && <span className="field-hint"><ShieldCheck size={13} /> Use at least 8 characters.</span>}</div>}
@@ -123,7 +143,11 @@ export function AuthPage({ mode, admin = false }: Props) {
           {mode === "login" && <div className="auth-inline"><label className="check-label"><input type="checkbox" checked={remember} onChange={(event) => setRemember(event.target.checked)} /> Remember me</label><Link href="/forgot-password">Forgot password?</Link></div>}
           {mode === "register" && <div><label className="check-label"><input type="checkbox" checked={termsAccepted} onChange={(event) => { setTermsAccepted(event.target.checked); clearError("termsAccepted"); }} /> I agree to the <Link href="/" onClick={(event) => { event.preventDefault(); toast("Terms page is not part of this starter yet.", "info"); }}>Terms of Service</Link> and Privacy Policy.</label>{fieldError("termsAccepted")}</div>}
           {mode === "reset" && fieldError("token")}
-          <Button type="submit" size="lg" disabled={loading}>{loading ? <span className="button-spinner" /> : null}{loading ? "Please wait…" : content.button}<ArrowRight size={15} /></Button>
+          <Button 
+            // onClick={handleOnclickLogin}
+            type="submit" size="lg" 
+            disabled={loading}>{loading ? <span className="button-spinner" /> : null}{loading ? "Please wait…" : content.button}<ArrowRight size={15} 
+          /></Button>
           <div className="">
             <FaFacebook size={20} />
             <FcGoogle size={20} className=""/>
