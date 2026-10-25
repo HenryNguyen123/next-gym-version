@@ -1,7 +1,8 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit'
 import type { PayloadAction } from '@reduxjs/toolkit'
 import axios from '@/configs/axios.config'
-import type {UserData} from '@/lib/redux/features/slices/account/account.slice'
+// import type {UserData} from '@/lib/redux/features/slices/account/account.slice'
+import { GenderEnum, FitnessGoalEnum, FitnessLevelEnum, PrivacySettingEnum } from '@/lib/enums/profile.enum'
 
 interface LoginData {
     email: string,
@@ -9,10 +10,63 @@ interface LoginData {
     // remember: boolean,
 }
 
+// interface DataResponse{
+//     EM: string
+//     EC: number
+//     DT: UserData | null
+// }
 interface DataResponse{
-    EM: string
-    EC: number
-    DT: UserData | null
+    accessToken: string
+    refreshToken: string
+    user: UserData | null
+}
+interface UserData{
+  id: number;
+  userName: string;
+  email: string;
+  isActive: boolean;
+  isVerified: boolean;
+  status: string;
+  failedLoginAttempts: number;
+  lockedUntil?: Date;
+  lastLoginAt?: Date;
+  createdAt: Date;
+  updatedAt: Date;
+
+  profile: ProfileDate,
+
+  roles: UserRole[],
+}
+
+interface ProfileDate {
+  id: number;
+  fullName: string;
+  avatar?: string;
+  avatarPublicId?: string;
+  coverImage?: string;
+  coverImagePublicId?: string;
+  bio?: string;
+  gender?: GenderEnum;
+  birthday?: Date;
+  phone?: string;
+  height?: number;
+  weight?: number;
+  bodyFat?: number;
+  goal?: FitnessGoalEnum;
+  fitnessLevel: FitnessLevelEnum;
+  experienceYears: number;
+  city?: string;
+  country?: string;
+  privacySetting: PrivacySettingEnum;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+interface UserRole {
+  name: string;
+  code: string;
+  description?: string;
+  createdAt?: Date;
 }
 
 export interface DataState {

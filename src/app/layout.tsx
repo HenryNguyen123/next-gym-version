@@ -4,6 +4,7 @@ import { ThemeProvider } from "@/components/providers/theme-provider";
 import { ToastProvider } from "@/components/providers/toast-provider";
 import "./globals.css";
 import ReduxProvider from "@/components/providers/redux-provider";
+import AccountHydrator from "@/components/auth/account-hydrator";
 
 export const metadata: Metadata = {
   title: { default: "Pulse — Find your people", template: "%s · Pulse" },
@@ -23,6 +24,7 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
       <body>
         <ThemeProvider>
           <ReduxProvider>
+            <AccountHydrator />
             <ToastProvider>{children}</ToastProvider>
           </ReduxProvider>
         </ThemeProvider>

@@ -1,92 +1,109 @@
-import { createSlice } from "@reduxjs/toolkit"
-import type { PayloadAction } from '@reduxjs/toolkit'
-import Cookies from 'js-cookie';
+import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 
-export interface UserData {
-  data: {
-    age: number;
-    email: string;
-    avatar: string;
-    firstName: string;
-    lastName: string;
-    userName: string;
-    roleId: number;
-    roleCode: string;
-    loginBy: string;
-  };
-}
-export interface dataLogin {
-  rememberUser: boolean,
-  data: UserData | null
+import type { UserData } from "@/lib/types/account";
+import {
+  clearAccount,
+  readAccount,
+  saveAccount,
+} from "@/lib/auth/account-storage";
+
+export type { UserData } from "@/lib/types/account";
+
+export interface DataLogin {
+  rememberUser: boolean;
+  data: UserData | null;
 }
 
 interface UserState {
-    data: UserData | null ,
-    isLogin: boolean,
-    isLoading: boolean
+  data: UserData | null;
+  isLogin: boolean;
+  isLoading: boolean;
 }
 
 const initialState: UserState = {
   data: null,
   isLogin: false,
-  isLoading: true
-}
+  isLoading: true,
+};
 
-const AccountSlice = createSlice({
-  name: 'account/account',
-  initialState,
-  reducers: {
-    setLogin(state, action: PayloadAction<dataLogin>) {
-      if (!action.payload || !action.payload.data) return
-      state.isLogin = true
-      state.data = action.payload.data
-      state.isLoading = false
-      if(state.isLogin && action.payload) {
-          const dataLogin = {data: (action.payload?.data?.data ? action.payload?.data?.data: action.payload?.data)}
-          Cookies.set('USER', JSON.stringify(dataLogin), action.payload.rememberUser ? { expires: 7 } : undefined)
-      } 
-    },
-    getLogin(state) {
-      try {
-        const cookie = Cookies.get('USER');
+/**
+ * Lưu account vào sessionStorage sau khi API login thành công.
+ * rememberUser được giữ tạm để tương thích với form hiện tại.
+ * Account vẫn dùng sessionStorage, không lưu lâu dài theo flag này.
+ */
+export const setLogin = createAsyncThunk<
+  UserData | null,
+  DataLogin
+>("account/setLogin", async ({ data }) => {
+  if (!data) return null;
 
-        if (cookie) {
-          const getcookie =  JSON.parse(cookie)
-          const dataCookie: UserData = {
-            data: getcookie.data
-          } 
-          state.data = dataCookie;
-          state.isLogin = true;
-          state.isLoading = false;
-          return;
-        }
-        state.data = null;
-        state.isLogin = false;
-        state.isLoading = false;
-      } catch (error) {
-        console.error("Error parsing login data:", error);
-        state.data = null;
-        state.isLogin = false;
-        state.isLoading = false;
+  saveAccount(data);
 
-        Cookies.remove('USER');
-      }
-    },
-    logoutUser(state) {
-      try {
-        Cookies.remove('USER')
-        Cookies.remove('USER')
-        state.isLogin = false
-        state.isLoading = false
-        state.data =null
-        console.log('logout success!')
-      } catch (error) {
-        console.log(error)
-      }
-    }
+  return data;
+});
+
+/**
+ * Khôi phục account khi ứng dụng được mở hoặc reload.
+ */
+export const getLogin = createAsyncThunk<UserData | null>(
+  "account/getLogin",
+  async () => readAccount(),
+);
+
+/**
+ * Xóa account phía client.
+ * Cookie HttpOnly phải được xóa qua API logout của NestJS.
+ */
+export const logoutUser = createAsyncThunk<void>(
+  "account/logoutUser",
+  async () => {
+    clearAccount();
   },
-})
+);
 
-export const { setLogin, getLogin, logoutUser } = AccountSlice.actions
-export default AccountSlice.reducer
+const accountSlice = createSlice({
+  name: "account",
+  initialState,
+  reducers: {},
+  extraReducers: (builder) => {
+    builder
+      .addCase(setLogin.pending, (state) => {
+        state.isLoading = true;
+      })
+      .addCase(setLogin.fulfilled, (state, action) => {
+        state.data = action.payload;
+        state.isLogin = action.payload !== null;
+        state.isLoading = false;
+      })
+      .addCase(setLogin.rejected, (state) => {
+        state.isLoading = false;
+      })
 
+      .addCase(getLogin.pending, (state) => {
+        state.isLoading = true;
+      })
+      .addCase(getLogin.fulfilled, (state, action) => {
+        state.data = action.payload;
+        state.isLogin = action.payload !== null;
+        state.isLoading = false;
+      })
+      .addCase(getLogin.rejected, (state) => {
+        state.data = null;
+        state.isLogin = false;
+        state.isLoading = false;
+      })
+
+      .addCase(logoutUser.fulfilled, (state) => {
+        state.data = null;
+        state.isLogin = false;
+        state.isLoading = false;
+      })
+      .addCase(logoutUser.rejected, (state) => {
+        state.data = null;
+        state.isLogin = false;
+        state.isLoading = false;
+      });
+  },
+});
+
+export default accountSlice.reducer;

@@ -14,10 +14,10 @@ describe("role permissions", () => {
   });
 
   it("keeps role and security administration super-admin-only", () => {
-    expect(hasPermission("admin", PERMISSIONS.manageRoles)).toBe(false);
-    expect(hasPermission("admin", PERMISSIONS.manageSecurity)).toBe(false);
-    expect(hasPermission("super_admin", PERMISSIONS.manageRoles)).toBe(true);
-    expect(hasPermission("super_admin", PERMISSIONS.manageSecurity)).toBe(true);
+    expect(hasPermission("ADMIN", PERMISSIONS.manageRoles)).toBe(false);
+    expect(hasPermission("ADMIN", PERMISSIONS.manageSecurity)).toBe(false);
+    expect(hasPermission("SUPER_ADMIN", PERMISSIONS.manageRoles)).toBe(true);
+    expect(hasPermission("SUPER_ADMIN", PERMISSIONS.manageSecurity)).toBe(true);
   });
 
   it("returns a stable, empty permission set for guests represented as users", () => {
